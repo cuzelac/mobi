@@ -21,15 +21,6 @@ def write_html(doc,file=OUT)
   end
 end
 
-# remove leading/trailing space from paragraphs
-doc.search('p').each do |p|
-  new_content = p.content
-
-  new_content.sub!(/^#{space_regexp}*/,'')
-  new_content.sub!(/#{space_regexp}*$/,'')
-
-    p.content = new_content
-end
 
 # remove all headings except the title
 
@@ -41,19 +32,18 @@ end
 doc.search('hr').remove
 doc.search('img').remove
 doc.search('a').remove
-doc.search('center').remove
+doc.search('//center[not(h3)]').remove
 doc.search('br').remove
 
 # for some reason, there is a 'body' and an 'omit'
 # concatenate them
 
-#body = doc.search('body')
-#doc.search('omit').each do |o|
-  #@logger.debug "attaching to body: #{o.inspect}"
-  #body.add_child o
-#end
-#binding.pry
-#doc.search('omit').remove
+body = doc.at_xpath('//body')
+doc.at_xpath('//omit').children.each do |o|
+  @logger.debug "attaching to body: #{o.inspect}"
+  body.add_child o
+end
+doc.search('omit').remove
 
 FakeElement = Struct.new(:children)
 FakeParagraph = Struct.new(:content)
@@ -75,10 +65,16 @@ def attach_text(doc,search)
   end
 end
 
+attach_text(doc,'//body[not(center)]')
 
-attach_text(doc,'body')
-attach_text(doc,'omit')
+# remove leading/trailing space from paragraphs
+doc.search('p').each do |p|
+  new_content = p.content
+
+  new_content.sub!(/^#{space_regexp}*/,'')
+  new_content.sub!(/#{space_regexp}*$/,'')
+
+    p.content = new_content
+end
 
 write_html(doc)
-
-binding.pry
